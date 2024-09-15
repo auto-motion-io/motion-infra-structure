@@ -1,0 +1,15 @@
+*.tfstate*
+
+.terraform.lock.hcl
+
+.terraform/
+
+.tfvars
+.tfvars.json
+
+*.log
+*.temp
+*.bak
+.terraform.cache/
+
+.vscode/
