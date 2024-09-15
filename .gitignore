@@ -13,3 +13,5 @@
 .terraform.cache/
 
 .vscode/
+
+*.pem
