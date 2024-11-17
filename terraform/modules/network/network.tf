@@ -56,6 +56,7 @@ resource "aws_subnet" "private_subnet" {
 }
 
 resource "aws_eip" "eip_nat_motion" {
+  vpc = true
 }
 
 resource "aws_nat_gateway" "nat_gw_motion" {
@@ -101,16 +102,28 @@ resource "aws_network_acl" "private_acl" {
   }
 }
 
-resource "aws_network_acl_rule" "inbound_all_pv" {
+resource "aws_network_acl_rule" "inbound_ssh_pv" {
   network_acl_id = aws_network_acl.private_acl.id
   rule_number = 100
   egress = false
-  protocol = "-1"
+  protocol = "tcp"
   rule_action = "allow"
   cidr_block = "10.0.0.0/28"
+  from_port = 22
+  to_port = 22
+}
+
+resource "aws_network_acl_rule" "inbound_all_pv" {
+  network_acl_id = aws_network_acl.private_acl.id
+  rule_number = 200
+  egress = false
+  protocol = "-1"
+  rule_action = "allow"
+  cidr_block = "0.0.0.0/0"
   from_port = 0
   to_port = 0
 }
+
 
 
 resource "aws_network_acl_rule" "outbound_pv" {
