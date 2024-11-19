@@ -37,7 +37,7 @@ deploy_server() {
             "$buscar_ip")
                 ./install-docker-vms.sh
                 sudo docker pull kauajuhrs/buscar-web:latest
-                sudo docker run -d --name buscar-web --restart=always -p 80:80 kauajuhrs/buscar-web:latest
+                sudo docker run -d --name buscar-web --restart=always -p 80:80 -p 443:443 kauajuhrs/buscar-web:latest
                 ;;
             "$pitstop_ip")
                 sudo docker pull kauajuhrs/pitstop-web:latest
