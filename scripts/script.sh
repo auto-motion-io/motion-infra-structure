@@ -14,48 +14,59 @@ vms=("$buscar_ip" "$pitstop_ip" "$motion_ip")
 
 cd ../scripts
 
-# Função para copiar arquivos
-copy_files() {
-    local ip=$1
-    scp -i ../motion_key.pem -o StrictHostKeyChecking=no \
-        ../motion_key.pem ../docker-compose-buscar.yml ../docker-compose-pitstop.yml ./install-docker-vms.sh \
-        ubuntu@$ip:/tmp/motion/
-}
+# Copia os arquivos necessários para a VM
+scp -i ../motion_key.pem -o StrictHostKeyChecking=no ../motion_key.pem ubuntu@$buscar_ip:/tmp/
+scp -i ../motion_key.pem -o StrictHostKeyChecking=no ../docker-compose-buscar.yml ubuntu@$buscar_ip:/tmp/
+scp -i ../motion_key.pem -o StrictHostKeyChecking=no ../docker-compose-pitstop.yml ubuntu@$buscar_ip:/tmp/
+scp -i ../motion_key.pem -o StrictHostKeyChecking=no ./install-docker-vms.sh ubuntu@$buscar_ip:/tmp/
 
-# Função de instalação e configuração do Docker
 deploy_server() {
     local ip=$1
+    echo "Instalando Docker na VM: $ip"
     ssh -i ../motion_key.pem -o StrictHostKeyChecking=no ubuntu@$ip bash << EOF
 
-        sudo apt-get update && sudo apt-get install -y docker.io
-        sudo systemctl start docker && sudo systemctl enable docker
+        # Atualiza o sistema
+        sudo apt-get update
+
+        # Instala o Docker
+        sudo apt-get install -y docker.io
+
+        # Inicia o Docker
+        sudo systemctl start docker
+
+        # Habilita o Docker para iniciar com o sistema
+        sudo systemctl enable docker
+
+        # Verifica se a instalação foi bem-sucedida
         docker --version
 
-        sudo mv /tmp/motion/* . && chmod 400 motion_key.pem && chmod +x install-docker-vms.sh
+        if [[ "$ip" == "$buscar_ip" ]]; then
+            sudo mv /tmp/motion_key.pem . 
+            sudo mv /tmp/docker-compose-buscar.yml .
+            sudo mv /tmp/docker-compose-pitstop.yml .
+            sudo mv /tmp/install-docker-vms.sh .
 
-        case "$ip" in
-            "$buscar_ip")
-                ./install-docker-vms.sh
-                sudo docker pull kauajuhrs/buscar-web:latest
-                sudo docker run -d --name buscar-web --restart=always -p 80:80 -p 443:443 kauajuhrs/buscar-web:latest
-                ;;
-            "$pitstop_ip")
-                sudo docker pull kauajuhrs/pitstop-web:latest
-                sudo docker run -d --name pitstop-web --restart=always -p 80:80 kauajuhrs/pitstop-web:latest
-                ;;
-            "$motion_ip")
-                sudo docker pull kauajuhrs/motion-web:v1
-                sudo docker run -d --name motion-web --restart=always -p 80:80 kauajuhrs/motion-web:v1
-                ;;
-        esac
+            sudo chmod 400 ./motion_key.pem
+            sudo chmod +x ./install-docker-vms.sh
+
+            ./install-docker-vms.sh
+
+            sudo docker pull kauajuhrs/buscar-web:latest
+            sudo docker run -d --name buscar-web --restart=always -p 80:80 -p 443:443 kauajuhrs/buscar-web:latest
+
+        elif [[ "$ip" == "$pitstop_ip" ]]; then
+            sudo docker pull kauajuhrs/pitstop-web:latest
+            sudo docker run -d --name pitstop-web --restart=always -p 80:80 -p 443:443 kauajuhrs/pitstop-web:latest
+        
+        elif [[ "$ip" == "$motion_ip" ]]; then
+            sudo docker pull kauajuhrs/motion-web:v1
+            sudo docker run -d --name motion-web --restart=always -p 80:80 -p 443:443 kauajuhrs/motion-web:v1
+        
+        fi
 EOF
 }
 
-# Copiar arquivos e deploy para todas as VMs
+# Itera sobre cada IP e chama a função de instalação
 for ip in "${vms[@]}"; do
-    copy_files "$ip" &
-    deploy_server "$ip" &
+    deploy_server "$ip"
 done
-
-# Espera todos os processos paralelos terminarem
-wait

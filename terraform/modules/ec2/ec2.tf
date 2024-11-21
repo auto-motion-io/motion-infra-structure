@@ -99,7 +99,6 @@ resource "aws_instance" "web_server_pitstop" {
   ami           = var.ami_ubuntu_24_04
   instance_type = var.defalt_type_instance
   key_name      = aws_key_pair.motion_key_pair.key_name
-  private_ip    = "10.0.0.8"
   ebs_block_device {
     device_name = "/dev/sda1"
     volume_size = 10
@@ -124,7 +123,6 @@ resource "aws_instance" "web_server_buscar" {
   ami           = var.ami_ubuntu_24_04
   instance_type = var.defalt_type_instance
   key_name      = aws_key_pair.motion_key_pair.key_name
-  private_ip    = "10.0.0.9"
   ebs_block_device {
     device_name = "/dev/sda1"
     volume_size = 10
@@ -149,7 +147,6 @@ resource "aws_instance" "web_server_motion" {
   ami           = var.ami_ubuntu_24_04
   instance_type = var.defalt_type_instance
   key_name      = aws_key_pair.motion_key_pair.key_name
-  private_ip    = "10.0.0.10"
   ebs_block_device {
     device_name = "/dev/sda1"
     volume_size = 10
